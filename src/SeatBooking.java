@@ -4,6 +4,8 @@ import java.awt.*;
 
 public class SeatBooking {
     private Sidebar sidebar; 
+    private static final int BUTTONS_PER_ROW = 20; 
+
 
     public SeatBooking(JFrame window) {
         initialiseGui(window);
@@ -36,6 +38,17 @@ public class SeatBooking {
         topPanel.add(screenPanel, BorderLayout.CENTER);
 
         
+        // Create the stalls panel
+        JPanel stallsPanel = createSeatPanel(285, "S ", new Color(240, 240, 240)); // Light gray background
+        JPanel balconyPanel = createSeatPanel(89, "B ", new Color(240, 240, 240)); // Light gray background
+
+        // Combine stalls and balcony panels into a single panel
+        JPanel seatPanels = new JPanel(new GridLayout(2, 1, 10, 10));
+        seatPanels.add(stallsPanel);
+        seatPanels.add(balconyPanel);
+
+        // Add the seat panels to the main panel
+         mainPanel.add(seatPanels, BorderLayout.CENTER);
 
 
 
@@ -74,5 +87,25 @@ public class SeatBooking {
 
         return screenPanel;
     }
+
+    private JPanel createSeatPanel(int numberOfSeats, String seatPrefix, Color backgroundColor) {
+        JPanel seatPanel = new JPanel(new GridLayout(0, BUTTONS_PER_ROW, 5, 5)); 
+        seatPanel.setBackground(backgroundColor);
+    
+        for (int i = 1; i <= numberOfSeats; i++) {
+            JButton seatButton = new JButton(seatPrefix + i);
+            seatButton.setPreferredSize(new Dimension(30, 30));
+            seatButton.setBackground(Color.WHITE);
+            seatButton.setOpaque(true);
+            seatButton.setBorder(BorderFactory.createLineBorder(Color.BLACK));
+    
+            seatPanel.add(seatButton);
+        }
+    
+        return seatPanel;
+    }
+
+
+    
     
 }

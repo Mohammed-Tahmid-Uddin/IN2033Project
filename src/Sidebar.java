@@ -6,6 +6,7 @@ public class Sidebar {
     private boolean sidebarVisible = false;
 
     public Sidebar() {
+        
         initialiseSidebar();
     }
 
