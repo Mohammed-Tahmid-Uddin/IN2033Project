@@ -3,6 +3,8 @@ import javax.swing.*;
 import java.awt.*;
 
 public class SeatBooking {
+    private Sidebar sidebar; 
+
     public SeatBooking(JFrame window) {
         initialiseGui(window);
     }
@@ -12,6 +14,8 @@ public class SeatBooking {
         JPanel mainPanel = new JPanel(new BorderLayout());
 
         // Create the menu button
+        sidebar=new Sidebar();
+        mainPanel.add(sidebar.getSidebar(), BorderLayout.WEST);
         JButton menuButton = createMenuButton();
 
         // Combine the menu button and screen button into a single panel
@@ -39,6 +43,8 @@ public class SeatBooking {
         menuButton.setFont(new Font("Arial", Font.PLAIN, 24));
         menuButton.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
         menuButton.setFocusPainted(false);
+        menuButton.addActionListener(e -> sidebar.toggleSidebar());
+
         return menuButton;
     }
     
