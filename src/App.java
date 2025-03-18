@@ -13,5 +13,7 @@ public class App {
 
         Window.setResizable(false);
 
+        SeatBooking seatBooking=new SeatBooking(Window);
+
     }
 }
