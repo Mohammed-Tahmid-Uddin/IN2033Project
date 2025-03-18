@@ -13,20 +13,27 @@ public class SeatBooking {
         // Creates a main panel with BorderLayout
         JPanel mainPanel = new JPanel(new BorderLayout());
 
-        // Create the menu button
+        // Creates the menu button
         sidebar=new Sidebar();
         mainPanel.add(sidebar.getSidebar(), BorderLayout.WEST);
         JButton menuButton = createMenuButton();
 
-        // Combine the menu button and screen button into a single panel
+        // Combining the menu button and screen button into a single panel
         JPanel topPanel = new JPanel(new BorderLayout());
         topPanel.setBackground(Color.WHITE);
 
-        // Menu button aligned left
+        // Menu button aligned to the left
         JPanel menuPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
         menuPanel.setBackground(Color.WHITE);
         menuPanel.add(menuButton);
         topPanel.add(menuPanel, BorderLayout.WEST);
+
+
+
+        // Creates the screen panel
+        JPanel screenPanel = createScreenPanel();
+        // Screen button centered
+        topPanel.add(screenPanel, BorderLayout.CENTER);
 
         
 
@@ -46,6 +53,26 @@ public class SeatBooking {
         menuButton.addActionListener(e -> sidebar.toggleSidebar());
 
         return menuButton;
+    }
+
+
+    private JPanel createScreenPanel() {
+        JPanel screenPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 0));
+        JButton screenButton = new JButton("Screen");
+        screenButton.setEnabled(false);
+        screenButton.setFont(new Font("Arial", Font.BOLD, 24));
+        screenButton.setBackground(Color.WHITE);
+        screenButton.setBorder(BorderFactory.createLineBorder(Color.BLACK));
+        screenButton.setFocusPainted(false);
+        screenButton.setOpaque(true); 
+
+
+
+        Dimension screenButtonSize = new Dimension(300, 50);
+        screenButton.setPreferredSize(screenButtonSize);
+        screenPanel.add(screenButton);
+
+        return screenPanel;
     }
     
 }
