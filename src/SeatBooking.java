@@ -4,8 +4,10 @@ import java.awt.*;
 
 public class SeatBooking {
     private Sidebar sidebar; 
-    private static final int BUTTONS_PER_ROW = 20; 
 
+    private static final int BUTTON_WIDTH = 30; 
+    private static final int BUTTON_HEIGHT = 30;
+    private static final int BUTTONS_PER_ROW = 20;
 
     public SeatBooking(JFrame window) {
         initialiseGui(window);
@@ -31,13 +33,6 @@ public class SeatBooking {
         topPanel.add(menuPanel, BorderLayout.WEST);
 
 
-
-        // Creates the screen panel
-        JPanel screenPanel = createScreenPanel();
-        // Screen button centered
-        topPanel.add(screenPanel, BorderLayout.CENTER);
-
-        
         // Create the stalls panel
         JPanel stallsPanel = createSeatPanel(285, "S ", new Color(240, 240, 240)); // Light gray background
         JPanel balconyPanel = createSeatPanel(89, "B ", new Color(240, 240, 240)); // Light gray background
@@ -49,6 +44,15 @@ public class SeatBooking {
 
         // Add the seat panels to the main panel
          mainPanel.add(seatPanels, BorderLayout.CENTER);
+
+
+
+        // Creates the screen panel
+        JPanel screenPanel = createScreenPanel();
+        // Screen button centered
+        topPanel.add(screenPanel, BorderLayout.CENTER);
+
+        
 
 
 
@@ -89,23 +93,21 @@ public class SeatBooking {
     }
 
     private JPanel createSeatPanel(int numberOfSeats, String seatPrefix, Color backgroundColor) {
-        JPanel seatPanel = new JPanel(new GridLayout(0, BUTTONS_PER_ROW, 5, 5)); 
+        JPanel seatPanel = new JPanel(new GridLayout(0, BUTTONS_PER_ROW, 5, 5));
         seatPanel.setBackground(backgroundColor);
     
         for (int i = 1; i <= numberOfSeats; i++) {
-            JButton seatButton = new JButton(seatPrefix + i);
-            seatButton.setPreferredSize(new Dimension(30, 30));
+            String seatId = seatPrefix + i;
+            JButton seatButton = new JButton(seatId);
+            seatButton.setPreferredSize(new Dimension(BUTTON_WIDTH, BUTTON_HEIGHT));
+            seatButton.setEnabled(true);
             seatButton.setBackground(Color.WHITE);
             seatButton.setOpaque(true);
             seatButton.setBorder(BorderFactory.createLineBorder(Color.BLACK));
-    
             seatPanel.add(seatButton);
         }
     
         return seatPanel;
     }
-
-
-    
     
 }
