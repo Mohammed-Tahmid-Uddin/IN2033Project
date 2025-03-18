@@ -2,8 +2,16 @@
 import javax.swing.*;
 import java.awt.*;
 
+
 public class SeatBooking {
+   
+
+  
+     private enum SeatStatus {AVAILABLE, BOOKED, RESERVED, WHEELCHAIR}
+
     private Sidebar sidebar; 
+    private JFrame window;
+
 
     private static final int BUTTON_WIDTH = 30; 
     private static final int BUTTON_HEIGHT = 30;
@@ -34,8 +42,8 @@ public class SeatBooking {
 
 
         // Create the stalls panel
-        JPanel stallsPanel = createSeatPanel(285, "S ", new Color(240, 240, 240)); // Light gray background
-        JPanel balconyPanel = createSeatPanel(89, "B ", new Color(240, 240, 240)); // Light gray background
+        JPanel stallsPanel = createSeatPanel(285, "S ", new Color(240, 240, 240));
+        JPanel balconyPanel = createSeatPanel(89, "B ", new Color(240, 240, 240)); 
 
         // Combine stalls and balcony panels into a single panel
         JPanel seatPanels = new JPanel(new GridLayout(2, 1, 10, 10));
@@ -105,9 +113,52 @@ public class SeatBooking {
             seatButton.setOpaque(true);
             seatButton.setBorder(BorderFactory.createLineBorder(Color.BLACK));
             seatPanel.add(seatButton);
+            seatButton.addActionListener(e -> showSeatOptions(seatId, seatButton));
         }
+
     
         return seatPanel;
     }
+
+    private void showSeatOptions(String seatId, JButton seatButton) {
+        String[] options = {"Book", "Reserve", "Wheelchair User"};
+        int choice = JOptionPane.showOptionDialog(
+                window,
+                "Pick an option for " + seatId,
+                "Seat Options",
+                JOptionPane.DEFAULT_OPTION,
+                JOptionPane.INFORMATION_MESSAGE,
+                null,
+                options,
+                options[0]
+        );
+    
+        switch (choice) {
+            case 0:
+                updateSeatStatus(seatId, seatButton, SeatStatus.BOOKED);
+                break;
+            case 1:
+                updateSeatStatus(seatId, seatButton, SeatStatus.RESERVED);
+                break;
+            case 2:
+                updateSeatStatus(seatId, seatButton, SeatStatus.WHEELCHAIR);
+                break;
+            default:
+                break;
+        }
+    }
+
+    private void updateSeatStatus(String seatId, JButton seatButton, SeatStatus status) {
+        seatButton.setEnabled(false);
+        seatButton.setText(""); // Removes the text
+        seatButton.setBackground(
+            status == SeatStatus.WHEELCHAIR ? Color.BLUE :
+            status == SeatStatus.RESERVED ? Color.GREEN :
+            Color.ORANGE);
+        seatButton.setOpaque(true);
+        seatButton.setBorder(BorderFactory.createLineBorder(Color.BLACK));
+        JOptionPane.showMessageDialog(window, seatId + " is now " + status + ".");
+    }
+    
     
 }
