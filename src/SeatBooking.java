@@ -1,11 +1,13 @@
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.Map;
 
 
 public class SeatBooking {
-   
-
+    private Map<String, SeatStatus> seats; 
+    private JButton[][] stallButtons;
+    private JButton[][] balconyButtons;
   
      private enum SeatStatus {AVAILABLE, BOOKED, RESERVED, WHEELCHAIR}
 
@@ -103,6 +105,11 @@ public class SeatBooking {
     private JPanel createSeatPanel(int numberOfSeats, String seatPrefix, Color backgroundColor) {
         JPanel seatPanel = new JPanel(new GridLayout(0, BUTTONS_PER_ROW, 5, 5));
         seatPanel.setBackground(backgroundColor);
+
+        // Initialises the 2D array for seat buttons
+        int rows = (numberOfSeats / BUTTONS_PER_ROW) + 1;
+        JButton[][] buttons = new JButton[rows][BUTTONS_PER_ROW];
+
     
         for (int i = 1; i <= numberOfSeats; i++) {
             String seatId = seatPrefix + i;
@@ -114,7 +121,24 @@ public class SeatBooking {
             seatButton.setBorder(BorderFactory.createLineBorder(Color.BLACK));
             seatPanel.add(seatButton);
             seatButton.addActionListener(e -> showSeatOptions(seatId, seatButton));
+
+             // Calculate row and column for the seat
+             int row = (i - 1) / BUTTONS_PER_ROW;
+             int col = (i - 1) % BUTTONS_PER_ROW;
+             buttons[row][col] = seatButton; // Store the button in the 2D array
+ 
+             seatPanel.add(seatButton);
         }
+
+
+
+        // Store the 2D array for later use
+        if (seatPrefix.equals("S ")) {
+            stallButtons = buttons;
+        } else {
+            balconyButtons = buttons;
+        }
+
 
     
         return seatPanel;
@@ -142,6 +166,12 @@ public class SeatBooking {
                 break;
             case 2:
                 updateSeatStatus(seatId, seatButton, SeatStatus.WHEELCHAIR);
+                    int row = (Integer.parseInt(seatId.replaceAll("[^0-9]", "")) - 1) / BUTTONS_PER_ROW;
+            int col = (Integer.parseInt(seatId.replaceAll("[^0-9]", "")) - 1) % BUTTONS_PER_ROW;
+            boolean adjacentSeatReserved = offerAdjacentSeatChoice(row, col, seatId.startsWith("S ") ? stallButtons : balconyButtons);
+            if (!adjacentSeatReserved) {
+                revertSeatStatus(seatId, seatButton);
+        }
                 break;
             default:
                 break;
@@ -158,6 +188,64 @@ public class SeatBooking {
         seatButton.setOpaque(true);
         seatButton.setBorder(BorderFactory.createLineBorder(Color.BLACK));
         JOptionPane.showMessageDialog(window, seatId + " is now " + status + ".");
+    }
+
+    private boolean offerAdjacentSeatChoice(int row, int col, JButton[][] buttons) {
+        String[] options = {"Left Seat", "Right Seat", "Cancel"};
+        int choice = JOptionPane.showOptionDialog(
+                window,
+                "Remove which adjacent seat?",
+                "Wheelchair Accessibility",
+                JOptionPane.YES_NO_CANCEL_OPTION,
+                JOptionPane.QUESTION_MESSAGE,
+                null,
+                options,
+                options[0]
+        );
+        boolean isLeft = (choice == 0);
+        if (choice == 1) isLeft = false;
+        else if (choice == 2) return false; // Cancel
+    
+        if (isValidAdjacentSeat(row, col, isLeft, buttons)) {
+            int targetCol = isLeft ? col - 1 : col + 1;
+            JButton adjacentButton = buttons[row][targetCol];
+            adjacentButton.setText(""); // Remove text
+            adjacentButton.setEnabled(false);
+            adjacentButton.setBackground(Color.GRAY);
+            adjacentButton.setOpaque(true);
+            adjacentButton.setBorder(BorderFactory.createLineBorder(Color.BLACK));
+            JOptionPane.showMessageDialog(window, "Adjacent seat has been reserved for wheelchair user.");
+            return true; // Adjacent seat successful
+        } else {
+            JOptionPane.showMessageDialog(window, "This adjacent seat is invalid.");
+            return false; // Adjacent seat failed
+        }
+    }
+
+
+    // Method to check if an adjacent seat is valid for removal
+    private boolean isValidAdjacentSeat(int row, int col, boolean isLeft, JButton[][] buttons) {
+        int targetCol = isLeft ? col - 1 : col + 1; // checks if we want to go left or right
+
+        // Check if the target column is within bounds
+        if (targetCol < 0 || targetCol >= BUTTONS_PER_ROW) {
+            return false; // Out of bounds
+        }
+
+        // Check if the adjacent seat is available
+        JButton adjacentButton = buttons[row][targetCol];
+        return adjacentButton.isEnabled(); // Ensures it's not already booked or reserved
+    }
+
+    // Method to revert seat status
+    private void revertSeatStatus(String seatId, JButton seatButton) {
+        seats.put(seatId, SeatStatus.AVAILABLE);
+        seatButton.setEnabled(true);
+        seatButton.setText(seatId); // Restores the text
+        seatButton.setBackground(Color.WHITE);
+        seatButton.setOpaque(true);
+        seatButton.setBorder(BorderFactory.createLineBorder(Color.BLACK));
+        JOptionPane.showMessageDialog(window, seatId + " is now available again.");
     }
     
     
