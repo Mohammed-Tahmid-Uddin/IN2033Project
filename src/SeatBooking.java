@@ -1,6 +1,7 @@
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.HashMap;
 import java.util.Map;
 
 
@@ -20,6 +21,7 @@ public class SeatBooking {
     private static final int BUTTONS_PER_ROW = 20;
 
     public SeatBooking(JFrame window) {
+        seats = new HashMap<>();
         initialiseGui(window);
     }
 
@@ -78,7 +80,6 @@ public class SeatBooking {
         menuButton.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
         menuButton.setFocusPainted(false);
         menuButton.addActionListener(e -> sidebar.toggleSidebar());
-
         return menuButton;
     }
 
@@ -92,8 +93,6 @@ public class SeatBooking {
         screenButton.setBorder(BorderFactory.createLineBorder(Color.BLACK));
         screenButton.setFocusPainted(false);
         screenButton.setOpaque(true); 
-
-
 
         Dimension screenButtonSize = new Dimension(300, 50);
         screenButton.setPreferredSize(screenButtonSize);
@@ -179,16 +178,22 @@ public class SeatBooking {
     }
 
     private void updateSeatStatus(String seatId, JButton seatButton, SeatStatus status) {
-        seatButton.setEnabled(false);
-        seatButton.setText(""); // Removes the text
-        seatButton.setBackground(
-            status == SeatStatus.WHEELCHAIR ? Color.BLUE :
-            status == SeatStatus.RESERVED ? Color.GREEN :
-            Color.ORANGE);
-        seatButton.setOpaque(true);
-        seatButton.setBorder(BorderFactory.createLineBorder(Color.BLACK));
-        JOptionPane.showMessageDialog(window, seatId + " is now " + status + ".");
-    }
+        if (seats.getOrDefault(seatId, SeatStatus.AVAILABLE) == SeatStatus.AVAILABLE) {
+            seats.put(seatId, status);
+            seatButton.setEnabled(false);
+            seatButton.setText(""); // Removes the text
+            seatButton.setBackground(
+                status == SeatStatus.WHEELCHAIR ? Color.BLUE :
+                status == SeatStatus.RESERVED ? Color.GREEN :
+                Color.ORANGE);
+            seatButton.setOpaque(true);
+            seatButton.setBorder(BorderFactory.createLineBorder(Color.BLACK));
+            JOptionPane.showMessageDialog(window, seatId + " is now " + status + ".");
+        }else {
+                JOptionPane.showMessageDialog(window, seatId + " is already taken.");
+            }
+        }
+    
 
     private boolean offerAdjacentSeatChoice(int row, int col, JButton[][] buttons) {
         String[] options = {"Left Seat", "Right Seat", "Cancel"};
