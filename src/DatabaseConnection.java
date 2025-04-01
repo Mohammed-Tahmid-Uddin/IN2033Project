@@ -1,5 +1,6 @@
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 
 public class DatabaseConnection {
@@ -25,5 +26,8 @@ public class DatabaseConnection {
         establishConnection();
     }
 
+    public static ResultSet getEventsForDate(int year, int month, int day) {
+        return null;
+    }
 }
 
