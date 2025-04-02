@@ -1,4 +1,3 @@
-
 import javax.swing.*;
 import java.awt.*;
 import java.util.HashMap;
@@ -57,6 +56,10 @@ public class SeatBooking {
         // Add the seat panels to the main panel
          mainPanel.add(seatPanels, BorderLayout.CENTER);
 
+        // Add a refund button
+        JButton refundButton = new JButton("Refund Seat");
+        refundButton.addActionListener(e -> showRefundOption());
+        menuPanel.add(refundButton);
 
 
         // Creates the screen panel
@@ -252,6 +255,50 @@ public class SeatBooking {
         seatButton.setBorder(BorderFactory.createLineBorder(Color.BLACK));
         JOptionPane.showMessageDialog(window, seatId + " is now available again.");
     }
+
+    private void showRefundOption() {
+        String seatId = JOptionPane.showInputDialog(window, "Enter the seat ID to refund (e.g.S 1 or B 1):");
+        if (seatId != null && !seatId.trim().isEmpty()) {
+            seatId = seatId.trim();
+            if (seatId.startsWith("S ") || seatId.startsWith("B ")) {
+                JButton seatButton = findSeatButton(seatId);
+                if (seatButton != null) {
+                    //System.out.print("nice it worked");
+                    refundSeat(seatId, seatButton);
+
+                } else {
+                    JOptionPane.showMessageDialog(window, "Seat ID not found.");
+                }
+            } else {
+                JOptionPane.showMessageDialog(window, "Invalid seat ID format. Please use 'S ' or 'B ' followed by a space and the seat number.");
+            }
+        }
+    }
+
+    private JButton findSeatButton(String seatId) {
+        JButton[][] buttonsArray = seatId.startsWith("S ") ? stallButtons : balconyButtons;
+        int seatNumber = Integer.parseInt(seatId.replaceAll("[^0-9]", "")) - 1;
+        int row = seatNumber / BUTTONS_PER_ROW;
+        int col = seatNumber % BUTTONS_PER_ROW;
     
+        if (row < buttonsArray.length && col < buttonsArray[row].length) {
+            return buttonsArray[row][col];
+        }
+        return null;
+    }
+    
+    private void refundSeat(String seatId, JButton seatButton) {
+        if (seats.getOrDefault(seatId, SeatStatus.AVAILABLE) != SeatStatus.AVAILABLE) {
+            seats.put(seatId, SeatStatus.AVAILABLE);
+            seatButton.setEnabled(true);
+            seatButton.setText(seatId); // Restores the text
+            seatButton.setBackground(Color.WHITE);
+            seatButton.setOpaque(true);
+            seatButton.setBorder(BorderFactory.createLineBorder(Color.BLACK));
+            JOptionPane.showMessageDialog(window, seatId + " has been refunded and is now available.");
+        } else {
+            JOptionPane.showMessageDialog(window, seatId + " is already available.");
+        }
+    }    
     
 }
