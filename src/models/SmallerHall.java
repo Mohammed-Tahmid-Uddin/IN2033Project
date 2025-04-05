@@ -1,4 +1,8 @@
+package models;
 import javax.swing.*;
+
+import Componenets.Sidebar;
+
 import java.awt.*;
 import java.util.HashMap;
 import java.util.Map;
