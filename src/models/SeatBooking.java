@@ -2,8 +2,12 @@ package models;
 import javax.swing.*;
 
 import Componenets.Sidebar;
-
+import utils.DatabaseConnection;
 import java.awt.*;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -22,10 +26,54 @@ public class SeatBooking {
     private static final int BUTTON_WIDTH = 30; 
     private static final int BUTTON_HEIGHT = 30;
     private static final int BUTTONS_PER_ROW = 20;
+    private int showId;
 
     public SeatBooking(JFrame window) {
         seats = new HashMap<>();
+        this.showId = getLatestShowId();
         initialiseGui(window);
+        loadSeat(); 
+        updateButton(); 
+
+    }
+
+    
+
+     private void loadSeat() {
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(
+                "SELECT seat_number, status FROM SeatStates WHERE show_id = ?")) {
+            pstmt.setInt(1, showId);
+            ResultSet rs = pstmt.executeQuery();
+            
+            while (rs.next()) {
+                String seatId = rs.getString("seat_number");
+                String status = rs.getString("status");
+                seats.put(seatId, SeatStatus.valueOf(status));
+            }
+            System.out.println("Loading seats for show ID: " + showId);
+        } catch (SQLException e) {
+            System.err.println("Error loading seat bookings: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
+    private void updateButton() {
+        seats.forEach((seatId, status) -> {
+            JButton button = findSeatButton(seatId);
+            if (button != null) {
+                button.setEnabled(false);
+                button.setText("");
+                button.setBackground(
+                    status == SeatStatus.WHEELCHAIR ? Color.BLUE :
+                    status == SeatStatus.RESERVED ? Color.GREEN :
+                    status == SeatStatus.BOOKED ? Color.ORANGE :
+                    Color.WHITE
+                );
+                button.setOpaque(true);
+                button.setBorder(BorderFactory.createLineBorder(Color.BLACK));
+            }
+        });
     }
 
     private void initialiseGui(JFrame window) {
@@ -196,6 +244,7 @@ public class SeatBooking {
             seatButton.setOpaque(true);
             seatButton.setBorder(BorderFactory.createLineBorder(Color.BLACK));
             JOptionPane.showMessageDialog(window, seatId + " is now " + status + ".");
+            saveSeatBooking(seatId, status); 
         }else {
                 JOptionPane.showMessageDialog(window, seatId + " is already taken.");
             }
@@ -300,9 +349,52 @@ public class SeatBooking {
             seatButton.setOpaque(true);
             seatButton.setBorder(BorderFactory.createLineBorder(Color.BLACK));
             JOptionPane.showMessageDialog(window, seatId + " has been refunded and is now available.");
+            deleteSeatBooking(seatId);
         } else {
             JOptionPane.showMessageDialog(window, seatId + " is already available.");
         }
-    }    
+    }   
+    
+    private int getLatestShowId() {
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement("SELECT show_id FROM Shows ORDER BY show_id DESC LIMIT 1")) {
+            ResultSet rs = pstmt.executeQuery();
+            if (rs.next()) {
+                return rs.getInt("show_id");
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return -1;
+    }
+    private void saveSeatBooking(String seatId, SeatStatus status) {
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(
+                "INSERT INTO SeatStates (show_id, seat_number, status) VALUES (?, ?, ?)")) {
+            pstmt.setInt(1, showId);
+            pstmt.setString(2, seatId);
+            pstmt.setString(3, status.name());
+            pstmt.executeUpdate();
+            System.out.println("Saved booking for seat: " + seatId + " with status: " + status);
+        } catch (SQLException e) {
+            System.err.println("Error saving seat booking: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
+    private void deleteSeatBooking(String seatId) {
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(
+                "DELETE FROM SeatStates WHERE show_id = ? AND seat_number = ?")) {
+            pstmt.setInt(1, showId);
+            pstmt.setString(2, seatId);
+            pstmt.executeUpdate();
+            System.out.println("Deleted booking for seat: " + seatId);
+        } catch (SQLException e) {
+            System.err.println("Error deleting seat booking: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+    
     
 }
