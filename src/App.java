@@ -5,6 +5,8 @@ import java.awt.Color;
 public class App {
     public static void main(String[] args) throws Exception {
         JFrame Window=new JFrame();
+        DatabaseConnection.getConnection();
+
 
         Window.setVisible(true);
         Window.setExtendedState(JFrame.MAXIMIZED_BOTH);  
@@ -15,7 +17,6 @@ public class App {
 
        // SeatBooking seatBooking=new SeatBooking(Window);
         SmallerHall hall=new SmallerHall(Window);
-        ahbsdfjasnjf
 
     }
 }
