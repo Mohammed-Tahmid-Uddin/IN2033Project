@@ -10,6 +10,8 @@ public class App {
     public static void main(String[] args) throws Exception {
         JFrame Window=new JFrame();
         DatabaseConnection.getConnection();
+        insertInitialData();
+        Window.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
 
         Window.setVisible(true);
@@ -19,8 +21,8 @@ public class App {
 
         Window.setResizable(false);
 
-       // SeatBooking seatBooking=new SeatBooking(Window);
-        SmallerHall hall=new SmallerHall(Window);
+        SeatBooking seatBooking=new SeatBooking(Window);
+       // SmallerHall hall=new SmallerHall(Window);
 
     }
 
