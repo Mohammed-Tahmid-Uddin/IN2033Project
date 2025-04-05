@@ -1,4 +1,8 @@
 import javax.swing.JFrame;
+
+import models.SeatBooking;
+import utils.DatabaseConnection;
+
 import java.awt.Color;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -10,7 +14,7 @@ public class App {
     public static void main(String[] args) throws Exception {
         JFrame Window=new JFrame();
         DatabaseConnection.getConnection();
-        insertInitialData();
+        insertData();
         Window.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
 
@@ -18,6 +22,9 @@ public class App {
         Window.setExtendedState(JFrame.MAXIMIZED_BOTH);  
         Window.setTitle("Lancaster's Music Hall App");
         Window.getContentPane().setBackground(Color.WHITE);
+        if (!doesShowExist("2023-12-15", "19:00:00")) {
+            insertData();
+        }
 
         Window.setResizable(false);
 
@@ -27,7 +34,7 @@ public class App {
     }
 
 
-    private static void insertInitialData() {
+    private static void insertData() {
     // Checkd if a show with the same date and time already exists
     if (!doesShowExist("2023-12-15", "19:00:00")) {
         // Inserts into Rooms table
