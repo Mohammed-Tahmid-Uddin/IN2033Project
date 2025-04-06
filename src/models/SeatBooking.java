@@ -346,19 +346,59 @@ public class SeatBooking {
     }
     
     private void refundSeat(String seatId, JButton seatButton) {
-        if (seats.getOrDefault(seatId, SeatStatus.AVAILABLE) != SeatStatus.AVAILABLE) {
+        /*if (seats.getOrDefault(seatId, SeatStatus.AVAILABLE) != SeatStatus.AVAILABLE) {
             seats.put(seatId, SeatStatus.AVAILABLE);
             seatButton.setEnabled(true);
             seatButton.setText(seatId); // Restores the text
             seatButton.setBackground(Color.WHITE);
             seatButton.setOpaque(true);
             seatButton.setBorder(BorderFactory.createLineBorder(Color.BLACK));
+            */
+
+
+            // If it was a wheelchair seat, reset the adjacent gray seat
+            SeatStatus currentStatus = seats.get(seatId);
+            if (currentStatus != null && currentStatus != SeatStatus.AVAILABLE) {
+                if (currentStatus == SeatStatus.WHEELCHAIR) {
+            // Calculate row and column
+            int seatNumber = Integer.parseInt(seatId.replaceAll("[^0-9]", "")) - 1;
+            int row = seatNumber / BUTTONS_PER_ROW;
+            int col = seatNumber % BUTTONS_PER_ROW;
+            JButton[][] buttons = seatId.startsWith("S ") ? stallButtons : balconyButtons;
+
+            // Checks both left and right adjacent seats
+            if (col > 0 && buttons[row][col-1].getBackground().equals(Color.GRAY)) {
+                resetAdjacentSeat(buttons[row][col-1], seatId.startsWith("S ") ? "S " : "B ", row, col-1);
+            }
+            if (col < BUTTONS_PER_ROW-1 && buttons[row][col+1].getBackground().equals(Color.GRAY)) {
+                resetAdjacentSeat(buttons[row][col+1], seatId.startsWith("S ") ? "S " : "B ", row, col+1);
+            }
+        }
+        seats.put(seatId, SeatStatus.AVAILABLE);
+            seatButton.setEnabled(true);
+            seatButton.setText(seatId); // Restores the text
+            seatButton.setBackground(Color.WHITE);
+            seatButton.setOpaque(true);
+            seatButton.setBorder(BorderFactory.createLineBorder(Color.BLACK));
+            
+
+
             JOptionPane.showMessageDialog(window, seatId + " has been refunded and is now available.");
             deleteSeatBooking(seatId);
         } else {
             JOptionPane.showMessageDialog(window, seatId + " is already available.");
         }
-    }   
+    }  
+    
+    private void resetAdjacentSeat(JButton button, String prefix, int row, int col) {
+        String adjacentSeatId = prefix + ((row * BUTTONS_PER_ROW + col) + 1);
+        button.setEnabled(true);
+        button.setText(adjacentSeatId);
+        button.setBackground(Color.WHITE);
+        button.setOpaque(true);
+        button.setBorder(BorderFactory.createLineBorder(Color.BLACK));
+        seats.put(adjacentSeatId, SeatStatus.AVAILABLE);
+    }
     
     private int getLatestShowId() {
         try (Connection conn = DatabaseConnection.getConnection();
