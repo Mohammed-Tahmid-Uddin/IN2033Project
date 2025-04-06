@@ -16,8 +16,9 @@ public class SeatBooking {
     private Map<String, SeatStatus> seats; 
     private JButton[][] stallButtons;
     private JButton[][] balconyButtons;
+    private int roomId;
   
-     private enum SeatStatus {AVAILABLE, BOOKED, RESERVED, WHEELCHAIR}
+    private enum SeatStatus {AVAILABLE, BOOKED, RESERVED, WHEELCHAIR}
 
     private Sidebar sidebar; 
     private JFrame window;
@@ -31,19 +32,20 @@ public class SeatBooking {
     public SeatBooking(JFrame window) {
         seats = new HashMap<>();
         this.showId = getLatestShowId();
+        this.roomId = getLatestRoomID(); // Dynamically fetch roomId
         initialiseGui(window);
         loadSeat(); 
         updateButton(); 
-
     }
 
     
 
-     private void loadSeat() {
+    private void loadSeat() {
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(
-                "SELECT seat_number, status FROM SeatStates WHERE show_id = ?")) {
+                "SELECT seat_number, status FROM SeatStates WHERE show_id = ? AND room_id = ?")) {
             pstmt.setInt(1, showId);
+            pstmt.setInt(2, roomId); // Include roomId in the query
             ResultSet rs = pstmt.executeQuery();
             
             while (rs.next()) {
@@ -51,7 +53,7 @@ public class SeatBooking {
                 String status = rs.getString("status");
                 seats.put(seatId, SeatStatus.valueOf(status));
             }
-            System.out.println("Loading seats for show ID: " + showId);
+            System.out.println("Loading seats for show ID: " + showId + " and room ID: " + roomId);
         } catch (SQLException e) {
             System.err.println("Error loading seat bookings: " + e.getMessage());
             e.printStackTrace();
@@ -367,13 +369,28 @@ public class SeatBooking {
         }
         return -1;
     }
+
+    private int getLatestRoomID() {
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement("SELECT room_id FROM Rooms WHERE room_name = 'Main Hall' LIMIT 1")) {
+            ResultSet rs = pstmt.executeQuery();
+            if (rs.next()) {
+                return rs.getInt("room_id");
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return 1; // Default room ID for Main Hall
+    }
+
     private void saveSeatBooking(String seatId, SeatStatus status) {
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(
-                "INSERT INTO SeatStates (show_id, seat_number, status) VALUES (?, ?, ?)")) {
+                "INSERT INTO SeatStates (show_id, seat_number, status, room_id) VALUES (?, ?, ?, ?)")) {
             pstmt.setInt(1, showId);
             pstmt.setString(2, seatId);
             pstmt.setString(3, status.name());
+            pstmt.setInt(4, roomId); // Include roomId in the query
             pstmt.executeUpdate();
             System.out.println("Saved booking for seat: " + seatId + " with status: " + status);
         } catch (SQLException e) {
@@ -385,9 +402,10 @@ public class SeatBooking {
     private void deleteSeatBooking(String seatId) {
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(
-                "DELETE FROM SeatStates WHERE show_id = ? AND seat_number = ?")) {
+                "DELETE FROM SeatStates WHERE show_id = ? AND seat_number = ? AND room_id = ?")) {
             pstmt.setInt(1, showId);
             pstmt.setString(2, seatId);
+            pstmt.setInt(3, roomId); // Include roomId in the query
             pstmt.executeUpdate();
             System.out.println("Deleted booking for seat: " + seatId);
         } catch (SQLException e) {
