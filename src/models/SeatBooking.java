@@ -1,5 +1,6 @@
 package models;
 import javax.swing.*;
+import javax.swing.border.Border;
 
 import Componenets.Sidebar;
 import utils.DatabaseConnection;
@@ -16,7 +17,6 @@ public class SeatBooking {
     private Map<String, SeatStatus> seats; 
     private JButton[][] stallButtons;
     private JButton[][] balconyButtons;
-    private int roomId;
   
     private enum SeatStatus {AVAILABLE, BOOKED, RESERVED, WHEELCHAIR}
 
@@ -24,10 +24,14 @@ public class SeatBooking {
     private JFrame window;
 
 
-    private static final int BUTTON_WIDTH = 30; 
-    private static final int BUTTON_HEIGHT = 30;
     private static final int BUTTONS_PER_ROW = 20;
+    private static final int S_WIDTH = 100;
+    private static final int S_HEIGHT = 65;
+    private static final int B_WIDTH = (int) (S_WIDTH * 0.9);
+    private static final int B_HEIGHT = S_HEIGHT;
+
     private int showId;
+    private int roomId;
     private int BookingId;
 
 
@@ -66,24 +70,24 @@ public class SeatBooking {
     private void updateButton() {
         seats.forEach((seatId, status) -> {
             JButton button = findSeatButton(seatId);
-            if (button != null) {
-                button.setEnabled(false);
-                button.setText("");
-                button.setBackground(
-                    status == SeatStatus.WHEELCHAIR ? Color.BLUE :
-                    status == SeatStatus.RESERVED ? Color.GREEN :
-                    status == SeatStatus.BOOKED ? Color.ORANGE :
-                    Color.WHITE
-                );
-                button.setOpaque(true);
-                button.setBorder(BorderFactory.createLineBorder(Color.BLACK));
-            }
+            button.setEnabled(false);
+            button.setText(seatId);
+            button.setBackground(
+                    status == SeatStatus.WHEELCHAIR ? new Color(102, 178, 255) :
+                            status == SeatStatus.RESERVED ? new Color(144, 238, 144) :
+                                    new Color(255, 204, 153)
+            );
+            button.setForeground(new Color(46, 83, 63));
+            button.setOpaque(true);
+            button.setBorder(BorderFactory.createLineBorder(Color.BLACK));
         });
     }
 
     private void initialiseGui(JFrame window) {
         // Creates a main panel with BorderLayout
         JPanel mainPanel = new JPanel(new BorderLayout());
+        mainPanel.setBackground(new Color(163, 204, 167));
+
 
         // Creates the menu button
         sidebar=new Sidebar();
@@ -92,37 +96,113 @@ public class SeatBooking {
 
         // Combining the menu button and screen button into a single panel
         JPanel topPanel = new JPanel(new BorderLayout());
-        topPanel.setBackground(Color.WHITE);
+        topPanel.setBackground(new Color(163, 204, 167));
 
         // Menu button aligned to the left
         JPanel menuPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        menuPanel.setBackground(Color.WHITE);
+        menuPanel.setBackground(new Color(163, 204, 167));
         menuPanel.add(menuButton);
         topPanel.add(menuPanel, BorderLayout.WEST);
 
+        JPanel stallsPanel = createSeatPanel(285, "S ", S_WIDTH, S_HEIGHT);
+        Dimension stallsSize = stallsPanel.getPreferredSize();
+        stallsPanel.setPreferredSize(stallsSize);
+        stallsPanel.setMinimumSize(stallsSize);
+        stallsPanel.setMaximumSize(stallsSize);
 
-        // Create the stalls panel
-        JPanel stallsPanel = createSeatPanel(285, "S ", new Color(240, 240, 240));
-        JPanel balconyPanel = createSeatPanel(89, "B ", new Color(240, 240, 240)); 
+        JScrollPane scrollableStalls = new JScrollPane(stallsPanel);
+        scrollableStalls.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
+        scrollableStalls.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+        scrollableStalls.setBorder(null);
+        scrollableStalls.getViewport().setBackground(new Color(163, 204, 167));
+        scrollableStalls.getVerticalScrollBar().setUnitIncrement(16);
+        scrollableStalls.setMaximumSize(new Dimension(Integer.MAX_VALUE, 300));
+        scrollableStalls.setPreferredSize(new Dimension(stallsSize.width + 20, 300));
 
-        // Combine stalls and balcony panels into a single panel
-        JPanel seatPanels = new JPanel(new GridLayout(2, 1, 10, 10));
-        seatPanels.add(stallsPanel);
+        JPanel balconyPanel = createSeatPanel(89, "B ", B_WIDTH, B_HEIGHT);
+
+
+
+        JPanel seatPanels = new JPanel();
+        seatPanels.setLayout(new BoxLayout(seatPanels, BoxLayout.Y_AXIS));
+        seatPanels.setOpaque(false);
+        seatPanels.add(scrollableStalls);
+        seatPanels.add(Box.createVerticalStrut(10));
         seatPanels.add(balconyPanel);
 
+
+        JPanel centerWrapper = new JPanel(new BorderLayout());
+       centerWrapper.setBackground(new Color(163, 204, 167));
+       centerWrapper.setBorder(BorderFactory.createEmptyBorder(20, 10, 20, 10));
+       centerWrapper.add(seatPanels, BorderLayout.CENTER);
+       mainPanel.add(centerWrapper, BorderLayout.CENTER);
+
+       JPanel legendPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+       legendPanel.setBackground(new Color(46, 83, 63));
+       legendPanel.setOpaque(true);
+       legendPanel.setBorder(BorderFactory.createEmptyBorder(10, 20, 10, 20));
+       legendPanel.add(createLegendItem("Available", new Color(181, 222, 184)));
+       legendPanel.add(createLegendItem("Booked", new Color(255, 204, 153)));
+       legendPanel.add(createLegendItem("Reserved", new Color(144, 238, 144)));
+       legendPanel.add(createLegendItem("Wheelchair", new Color(102, 178, 255)));
+       mainPanel.add(legendPanel, BorderLayout.SOUTH);
+       
+       window.setLayout(new BorderLayout());
+       window.getContentPane().setBackground(new Color(163, 204, 167));
+       window.add(mainPanel, BorderLayout.CENTER);
+       window.revalidate();
+        
+    
+
         // Add the seat panels to the main panel
-         mainPanel.add(seatPanels, BorderLayout.CENTER);
 
         // Add a refund button
         JButton refundButton = new JButton("Refund Seat");
+        refundButton.setFont(new Font("Georgia", Font.PLAIN, 11));
+        refundButton.setBackground(new Color(181, 222, 184));
+        refundButton.setForeground(new Color(46, 83, 63));
+        refundButton.setFocusPainted(false);
+        refundButton.setPreferredSize(new Dimension(120, 50));
+        refundButton.setBorder(BorderFactory.createEmptyBorder(2, 12, 2, 12));
+        refundButton.setOpaque(false);
+        refundButton.setContentAreaFilled(false);
+        refundButton.setUI(new javax.swing.plaf.basic.BasicButtonUI());
+        refundButton.setBorder(new GlowingRoundedBorder(20, new Color(97, 143, 110)));
+        refundButton.addMouseListener(new java.awt.event.MouseAdapter() {
+            @Override
+            public void mouseEntered(java.awt.event.MouseEvent evt) {
+                refundButton.setOpaque(true);
+                refundButton.setBackground(new Color(197, 234, 198));
+            }
+
+            @Override
+            public void mouseExited(java.awt.event.MouseEvent evt) {
+                refundButton.setOpaque(false);
+            }
+        });
+
+
         refundButton.addActionListener(e -> showRefundOption());
         menuPanel.add(refundButton);
 
 
         // Creates the screen panel
         JPanel screenPanel = createScreenPanel();
-        // Screen button centered
+        JPanel screenWrapper = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 0));
+        screenWrapper.setBackground(new Color(163, 204, 167));
+        screenWrapper.add(screenPanel);
         topPanel.add(screenPanel, BorderLayout.CENTER);
+
+        JPanel headerPanel = new JPanel(new BorderLayout());
+        headerPanel.setBackground(new Color(163, 204, 167));
+        JLabel title = new JLabel("Lancaster's Music Hall - Main Hall Booking");
+        title.setFont(new Font("Georgia", Font.BOLD, 28));
+        title.setForeground(new Color(46, 83, 63));
+        title.setHorizontalAlignment(SwingConstants.CENTER);
+        title.setBorder(BorderFactory.createEmptyBorder(20, 0, 10, 0));
+        headerPanel.add(title, BorderLayout.NORTH);
+        headerPanel.add(topPanel, BorderLayout.SOUTH);
+        mainPanel.add(headerPanel, BorderLayout.NORTH);
 
         
 
@@ -134,64 +214,103 @@ public class SeatBooking {
         window.revalidate(); 
     }
 
+    private JPanel createLegendItem(String label, Color color) {
+        JPanel item = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        item.setOpaque(false);
+        JLabel colourBox = new JLabel();
+        colourBox.setOpaque(true);
+        colourBox.setBackground(color);
+        colourBox.setPreferredSize(new Dimension(20, 20));
+        colourBox.setBorder(BorderFactory.createLineBorder(Color.WHITE));
+        JLabel text = new JLabel(" " + label);
+        text.setForeground(new Color(181, 222, 184));
+        text.setFont(new Font("Georgia", Font.PLAIN, 12));
+        item.add(colourBox);
+        item.add(text);
+        return item;
+    }
+
     private JButton createMenuButton() {
         JButton menuButton = new JButton("☰");
-        menuButton.setFont(new Font("Arial", Font.PLAIN, 24));
+        menuButton.setFont(new Font("Georgia", Font.BOLD, 24));
+        menuButton.setBackground(new Color(46, 83, 63));
+        menuButton.setForeground(new Color(181, 222, 184));
         menuButton.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
         menuButton.setFocusPainted(false);
+        menuButton.setOpaque(true);
+        menuButton.setContentAreaFilled(true);
         menuButton.addActionListener(e -> sidebar.toggleSidebar());
         return menuButton;
     }
 
 
     private JPanel createScreenPanel() {
-        JPanel screenPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 0));
-        JButton screenButton = new JButton("Screen");
-        screenButton.setEnabled(false);
-        screenButton.setFont(new Font("Arial", Font.BOLD, 24));
-        screenButton.setBackground(Color.WHITE);
-        screenButton.setBorder(BorderFactory.createLineBorder(Color.BLACK));
+         JPanel screenPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 0));
+        screenPanel.setBackground(new Color(181, 222, 184));
+        JButton screenButton = new JButton("S  C  R  E  E  N");
+        screenButton.setFont(new Font("Georgia", Font.BOLD, 20));
+        screenButton.setForeground(new Color(46, 83, 63));
+        screenButton.setBackground(new Color(163, 204, 167));
+        screenButton.setBorder(BorderFactory.createLineBorder(new Color(46, 83, 63), 2));
         screenButton.setFocusPainted(false);
-        screenButton.setOpaque(true); 
-
-        Dimension screenButtonSize = new Dimension(300, 50);
-        screenButton.setPreferredSize(screenButtonSize);
+        screenButton.setOpaque(true);
+        screenButton.setPreferredSize(new Dimension(600, 40));
         screenPanel.add(screenButton);
 
         return screenPanel;
     }
 
-    private JPanel createSeatPanel(int numberOfSeats, String seatPrefix, Color backgroundColor) {
-        JPanel seatPanel = new JPanel(new GridLayout(0, BUTTONS_PER_ROW, 5, 5));
-        seatPanel.setBackground(backgroundColor);
+    private JPanel createSeatPanel(int numberOfSeats, String seatPrefix, int width, int height) {
+        JPanel seatPanel = new JPanel(new GridBagLayout());
+        seatPanel.setBackground(new Color(163, 204, 167));
+        seatPanel.setBorder(BorderFactory.createEmptyBorder(10, 0, 10, 0));
 
-        // Initialises the 2D array for seat buttons
-        int rows = (numberOfSeats / BUTTONS_PER_ROW) + 1;
-        JButton[][] buttons = new JButton[rows][BUTTONS_PER_ROW];
 
-    
-        for (int i = 1; i <= numberOfSeats; i++) {
-            String seatId = seatPrefix + i;
-            JButton seatButton = new JButton(seatId);
-            seatButton.setPreferredSize(new Dimension(BUTTON_WIDTH, BUTTON_HEIGHT));
-            seatButton.setEnabled(true);
-            seatButton.setBackground(Color.WHITE);
-            seatButton.setOpaque(true);
-            seatButton.setBorder(BorderFactory.createLineBorder(Color.BLACK));
-            seatPanel.add(seatButton);
-            seatButton.addActionListener(e -> showSeatOptions(seatId, seatButton));
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.insets = new Insets(4, 4, 4, 4);
 
-             // Calculate row and column for the seat
-             int row = (i - 1) / BUTTONS_PER_ROW;
-             int col = (i - 1) % BUTTONS_PER_ROW;
-             buttons[row][col] = seatButton; // Store the button in the 2D array
- 
-             seatPanel.add(seatButton);
+
+        int fullRows = numberOfSeats / BUTTONS_PER_ROW;
+        int remainingSeats = numberOfSeats % BUTTONS_PER_ROW;
+        int totalRows = fullRows + (remainingSeats > 0 ? 1 : 0);
+
+
+        JButton[][] buttons = new JButton[totalRows][];
+
+
+        for (int row = 0; row < fullRows; row++) {
+            buttons[row] = new JButton[BUTTONS_PER_ROW];
+            for (int col = 0; col < BUTTONS_PER_ROW; col++) {
+                int seatNum = (row * BUTTONS_PER_ROW) + col + 1;
+                String seatId = seatPrefix + seatNum;
+                JButton seatButton = createStyledSeatButton(seatId, width, height);
+                buttons[row][col] = seatButton;
+
+
+                gbc.gridx = col;
+                gbc.gridy = row;
+                seatPanel.add(seatButton, gbc);
+            }
         }
 
 
+        if (remainingSeats > 0) {
+            buttons[totalRows - 1] = new JButton[remainingSeats];
+            int startCol = (BUTTONS_PER_ROW - remainingSeats) / 2;
+            for (int col = 0; col < remainingSeats; col++) {
+                int seatNum = (fullRows * BUTTONS_PER_ROW) + col + 1;
+                String seatId = seatPrefix + seatNum;
+                JButton seatButton = createStyledSeatButton(seatId, width, height);
+                buttons[totalRows - 1][col] = seatButton;
 
-        // Store the 2D array for later use
+
+                gbc.gridx = startCol + col;
+                gbc.gridy = totalRows - 1;
+                seatPanel.add(seatButton, gbc);
+            }
+        }
+
+
         if (seatPrefix.equals("S ")) {
             stallButtons = buttons;
         } else {
@@ -199,8 +318,42 @@ public class SeatBooking {
         }
 
 
-    
         return seatPanel;
+
+      
+    }
+    private JButton createStyledSeatButton(String seatId, int width, int height) {
+        JButton seatButton = new JButton(seatId);
+        seatButton.setPreferredSize(new Dimension(width, height));
+        seatButton.setFont(new Font("Georgia", Font.PLAIN, 16));
+        seatButton.setEnabled(true);
+        seatButton.setToolTipText("Seat " + seatId);
+        seatButton.setOpaque(true);
+        seatButton.setBackground(new Color(181, 222, 184));
+        seatButton.setForeground(new Color(46, 83, 63));
+        seatButton.setBorder(new SimpleRoundedBorder(15, new Color(46, 83, 63)));
+
+
+        seatButton.addMouseListener(new java.awt.event.MouseAdapter() {
+            @Override
+            public void mouseEntered(java.awt.event.MouseEvent evt) {
+                if (seatButton.isEnabled()) {
+                    seatButton.setBorder(new GlowingRoundedBorder(15, new Color(97, 143, 110)));
+                }
+            }
+
+
+            @Override
+            public void mouseExited(java.awt.event.MouseEvent evt) {
+                if (seatButton.isEnabled()) {
+                    seatButton.setBorder(new SimpleRoundedBorder(15, new Color(46, 83, 63)));
+                }
+            }
+        });
+
+
+        seatButton.addActionListener(e -> showSeatOptions(seatId, seatButton));
+        return seatButton;
     }
 
     private void showSeatOptions(String seatId, JButton seatButton) {
@@ -215,45 +368,46 @@ public class SeatBooking {
                 options,
                 options[0]
         );
-    
+
+
         switch (choice) {
-            case 0:
-                updateSeatStatus(seatId, seatButton, SeatStatus.BOOKED);
-                break;
-            case 1:
-                updateSeatStatus(seatId, seatButton, SeatStatus.RESERVED);
-                break;
-            case 2:
+            case 0 -> updateSeatStatus(seatId, seatButton, SeatStatus.BOOKED);
+            case 1 -> updateSeatStatus(seatId, seatButton, SeatStatus.RESERVED);
+            case 2 -> {
                 updateSeatStatus(seatId, seatButton, SeatStatus.WHEELCHAIR);
-                    int row = (Integer.parseInt(seatId.replaceAll("[^0-9]", "")) - 1) / BUTTONS_PER_ROW;
-            int col = (Integer.parseInt(seatId.replaceAll("[^0-9]", "")) - 1) % BUTTONS_PER_ROW;
-            boolean adjacentSeatReserved = offerAdjacentSeatChoice(row, col, seatId.startsWith("S ") ? stallButtons : balconyButtons);
-            if (!adjacentSeatReserved) {
-                revertSeatStatus(seatId, seatButton);
-        }
-                break;
-            default:
-                break;
+                int seatNum = Integer.parseInt(seatId.replaceAll("[^0-9]", "")) - 1;
+                int row = seatNum / BUTTONS_PER_ROW;
+                int col = seatNum % BUTTONS_PER_ROW;
+                JButton[][] targetButtons = seatId.startsWith("S ") ? stallButtons : balconyButtons;
+                if (!offerAdjacentSeatChoice(row, col, targetButtons)) {
+                    revertSeatStatus(seatId, seatButton);
+                }
+            }
         }
     }
+
 
     private void updateSeatStatus(String seatId, JButton seatButton, SeatStatus status) {
         if (seats.getOrDefault(seatId, SeatStatus.AVAILABLE) == SeatStatus.AVAILABLE) {
             seats.put(seatId, status);
             seatButton.setEnabled(false);
-            seatButton.setText(""); // Removes the text
+            seatButton.setText(seatId);
             seatButton.setBackground(
-                status == SeatStatus.WHEELCHAIR ? Color.BLUE :
-                status == SeatStatus.RESERVED ? Color.GREEN :
-                Color.ORANGE);
+                    status == SeatStatus.WHEELCHAIR ? new Color(102, 178, 255) :
+                            status == SeatStatus.RESERVED ? new Color(144, 238, 144) :
+                                    new Color(255, 204, 153)
+            );
+            seatButton.setForeground(new Color(46, 83, 63));
             seatButton.setOpaque(true);
             seatButton.setBorder(BorderFactory.createLineBorder(Color.BLACK));
             JOptionPane.showMessageDialog(window, seatId + " is now " + status + ".");
             saveSeatBooking(seatId, status); 
-        }else {
-                JOptionPane.showMessageDialog(window, seatId + " is already taken.");
-            }
+        } else {
+            JOptionPane.showMessageDialog(window, seatId + " is already taken.");
         }
+    }
+
+
     
 
     private boolean offerAdjacentSeatChoice(int row, int col, JButton[][] buttons) {
@@ -346,15 +500,6 @@ public class SeatBooking {
     }
     
     private void refundSeat(String seatId, JButton seatButton) {
-        /*if (seats.getOrDefault(seatId, SeatStatus.AVAILABLE) != SeatStatus.AVAILABLE) {
-            seats.put(seatId, SeatStatus.AVAILABLE);
-            seatButton.setEnabled(true);
-            seatButton.setText(seatId); // Restores the text
-            seatButton.setBackground(Color.WHITE);
-            seatButton.setOpaque(true);
-            seatButton.setBorder(BorderFactory.createLineBorder(Color.BLACK));
-            */
-
 
             // If it was a wheelchair seat, reset the adjacent gray seat
             SeatStatus currentStatus = seats.get(seatId);
@@ -377,8 +522,8 @@ public class SeatBooking {
         seats.put(seatId, SeatStatus.AVAILABLE);
             seatButton.setEnabled(true);
             seatButton.setText(seatId); // Restores the text
-            seatButton.setBackground(Color.WHITE);
-            seatButton.setOpaque(true);
+            seatButton.setBackground(new Color(181, 222, 184));
+            seatButton.setForeground(new Color(46, 83, 63));            seatButton.setOpaque(true);
             seatButton.setBorder(BorderFactory.createLineBorder(Color.BLACK));
             
 
@@ -479,20 +624,81 @@ public class SeatBooking {
             pstmt.executeUpdate();
 
 
-        try (PreparedStatement pstmt1 = conn.prepareStatement(
-            "DELETE FROM SeatStates WHERE show_id = ? AND seat_number = ? AND room_id = ?, AND boking_id = ?")) {
-            pstmt1.setInt(1, showId);
+            try (PreparedStatement pstmt1 = conn.prepareStatement(
+                "DELETE FROM Tickets WHERE booking_id = ? AND seat_number = ?")) {
+            pstmt1.setInt(1, BookingId);
             pstmt1.setString(2, seatId);
-            pstmt1.setInt(3, roomId);
-            pstmt1.setInt(4, BookingId);
             pstmt1.executeUpdate();
         }
+
+         
+
+        
             System.out.println("Deleted booking for seat: " + seatId);
         } catch (SQLException e) {
             System.err.println("Error deleting seat booking: " + e.getMessage());
             e.printStackTrace();
         }
     }
+
+    private static class GlowingRoundedBorder implements Border {
+        private final int radius;
+        private final Color glowColor;
+
+        public GlowingRoundedBorder(int radius, Color glowColor) {
+            this.radius = radius;
+            this.glowColor = glowColor;
+        }
+
+        public Insets getBorderInsets(Component c) {
+            return new Insets(radius + 4, radius + 4, radius + 4, radius + 4);
+        }
+
+        public boolean isBorderOpaque() {
+            return false;
+        }
+
+        public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
+            Graphics2D g2 = (Graphics2D) g.create();
+            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+            g2.setColor(new Color(glowColor.getRed(), glowColor.getGreen(), glowColor.getBlue(), 100));
+            g2.setStroke(new BasicStroke(6f));
+            g2.drawRoundRect(x + 1, y + 1, width - 3, height - 3, radius, radius);
+
+            g2.setColor(glowColor);
+            g2.setStroke(new BasicStroke(1.5f));
+            g2.drawRoundRect(x, y, width - 1, height - 1, radius, radius);
+            g2.dispose();
+        }
+    }
+
+    private static class SimpleRoundedBorder implements Border {
+        private final int radius;
+        private final Color color;
+
+        public SimpleRoundedBorder(int radius, Color color) {
+            this.radius = radius;
+            this.color = color;
+        }
+
+        public Insets getBorderInsets(Component c) {
+            return new Insets(4, 4, 4, 4);
+        }
+
+        public boolean isBorderOpaque() {
+            return true;
+        }
+
+        public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
+            Graphics2D g2 = (Graphics2D) g.create();
+            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+            g2.setColor(color);
+            g2.setStroke(new BasicStroke(3.5f));
+            g2.drawRoundRect(x, y, width - 1, height - 1, radius, radius);
+            g2.dispose();
+        }
+    }
+    
     
     
 }
