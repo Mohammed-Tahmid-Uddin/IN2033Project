@@ -2,11 +2,15 @@ package models;
 import javax.swing.*;
 
 import Componenets.Sidebar;
+import utils.DatabaseConnection;
 
 import java.awt.*;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map;
-
 
 public class SmallerHall {
     private Map<String, SeatStatus> seats; 
@@ -22,11 +26,57 @@ public class SmallerHall {
     private static final int BUTTON_WIDTH = 30; 
     private static final int BUTTON_HEIGHT = 30;
     private static final int BUTTONS_PER_ROW = 20;
+    private int showId;
+    private int roomId;
+
 
     public SmallerHall(JFrame window) {
         seats = new HashMap<>();
+        this.showId = getLatestShowId();
+        this.roomId=getLatestRoomID();
         initialiseGui(window);
+        loadSeat(); 
+        updateButton(); 
     }
+
+ private void loadSeat() {
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(
+            "SELECT seat_number, status FROM SeatStates WHERE show_id = ? AND room_id = ?")) {
+            pstmt.setInt(1, showId);
+            pstmt.setInt(2, roomId); // Assuming 2 is the room_id for SmallerHall
+            ResultSet rs = pstmt.executeQuery();
+            
+            while (rs.next()) {
+            String seatId = rs.getString("seat_number");
+            String status = rs.getString("status");
+            seats.put(seatId, SeatStatus.valueOf(status));
+            }
+            System.out.println("Loading seats for show ID: " + showId + " and room ID:" + roomId);
+        } catch (SQLException e) {
+            System.err.println("Error loading seat bookings: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
+    private void updateButton() {
+        seats.forEach((seatId, status) -> {
+            JButton button = findSeatButton(seatId);
+            if (button != null) {
+                button.setEnabled(false);
+                button.setText("");
+                button.setBackground(
+                    status == SeatStatus.WHEELCHAIR ? Color.BLUE :
+                    status == SeatStatus.RESERVED ? Color.GREEN :
+                    status == SeatStatus.BOOKED ? Color.ORANGE :
+                    Color.WHITE
+                );
+                button.setOpaque(true);
+                button.setBorder(BorderFactory.createLineBorder(Color.BLACK));
+            }
+        });
+    }
+
 
     private void initialiseGui(JFrame window) {
         // Creates a main panel with BorderLayout
@@ -114,6 +164,8 @@ public class SmallerHall {
         int rows = (numberOfSeats / BUTTONS_PER_ROW) + 1;
         JButton[][] buttons = new JButton[rows][BUTTONS_PER_ROW];
 
+        this.stallButtons = buttons;
+
     
         for (int i = 1; i <= numberOfSeats; i++) {
             String seatId = seatPrefix + i;
@@ -194,6 +246,7 @@ public class SmallerHall {
             seatButton.setOpaque(true);
             seatButton.setBorder(BorderFactory.createLineBorder(Color.BLACK));
             JOptionPane.showMessageDialog(window, seatId + " is now " + status + ".");
+            saveSeatBooking(seatId, status); 
         }else {
                 JOptionPane.showMessageDialog(window, seatId + " is already taken.");
             }
@@ -260,10 +313,10 @@ public class SmallerHall {
     
 
     private void showRefundOption() {
-        String seatId = JOptionPane.showInputDialog(window, "Enter the seat ID to refund (e.g.S 1 or B 1):");
+        String seatId = JOptionPane.showInputDialog(window, "Enter the seat ID to refund (e.g.S 1):");
         if (seatId != null && !seatId.trim().isEmpty()) {
             seatId = seatId.trim();
-            if (seatId.startsWith("S ") || seatId.startsWith("B ")) {
+            if (seatId.startsWith("S ")){
                 JButton seatButton = findSeatButton(seatId);
                 if (seatButton != null) {
                     //System.out.print("nice it worked");
@@ -279,13 +332,16 @@ public class SmallerHall {
     }
 
     private JButton findSeatButton(String seatId) {
-        JButton[][] buttonsArray = seatId.startsWith("S ") ? stallButtons : balconyButtons;
+        if (!seatId.startsWith("S ")) {
+            return null;
+        }
+
         int seatNumber = Integer.parseInt(seatId.replaceAll("[^0-9]", "")) - 1;
         int row = seatNumber / BUTTONS_PER_ROW;
         int col = seatNumber % BUTTONS_PER_ROW;
     
-        if (row < buttonsArray.length && col < buttonsArray[row].length) {
-            return buttonsArray[row][col];
+        if (row < stallButtons.length && col < stallButtons[row].length) {
+            return stallButtons[row][col];
         }
         return null;
     }
@@ -299,9 +355,67 @@ public class SmallerHall {
             seatButton.setOpaque(true);
             seatButton.setBorder(BorderFactory.createLineBorder(Color.BLACK));
             JOptionPane.showMessageDialog(window, seatId + " has been refunded and is now available.");
+            deleteSeatBooking(seatId);
+
         } else {
             JOptionPane.showMessageDialog(window, seatId + " is already available.");
         }
-    }    
+    }  
+    
+    private int getLatestShowId() {
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement("SELECT show_id FROM Shows ORDER BY show_id DESC LIMIT 1")) {
+            ResultSet rs = pstmt.executeQuery();
+            if (rs.next()) {
+                return rs.getInt("show_id");
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return -1;
+    }
+
+    private int getLatestRoomID() {
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement("SELECT room_id FROM Rooms WHERE room_name = 'Small Hall' LIMIT 1")) {
+            ResultSet rs = pstmt.executeQuery();
+            if (rs.next()) {
+                return rs.getInt("room_id");
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return 2; // Default room ID for Smaller Hall
+    }
+    private void saveSeatBooking(String seatId, SeatStatus status) {
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(
+                "INSERT INTO SeatStates (show_id, seat_number, status, room_id) VALUES (?, ?, ?, ?)")) {
+            pstmt.setInt(1, showId);
+            pstmt.setString(2, seatId);
+            pstmt.setString(3, status.name());
+            pstmt.setInt(4, roomId);
+            pstmt.executeUpdate();
+            System.out.println("Saved booking for seat: " + seatId + " with status: " + status);
+        } catch (SQLException e) {
+            System.err.println("Error saving seat booking: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
+    private void deleteSeatBooking(String seatId) {
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(
+                "DELETE FROM SeatStates WHERE show_id = ? AND seat_number = ? AND room_id = ?")) {
+            pstmt.setInt(1, showId);
+            pstmt.setString(2, seatId);
+            pstmt.setInt(3, roomId);
+            pstmt.executeUpdate();
+            System.out.println("Deleted booking for seat: " + seatId);
+        } catch (SQLException e) {
+            System.err.println("Error deleting seat booking: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
     
 }

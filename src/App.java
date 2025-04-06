@@ -1,6 +1,7 @@
 import javax.swing.JFrame;
 
 import models.SeatBooking;
+import models.SmallerHall;
 import utils.DatabaseConnection;
 
 import java.awt.Color;
@@ -28,8 +29,8 @@ public class App {
 
         Window.setResizable(false);
 
-        SeatBooking seatBooking=new SeatBooking(Window);
-       // SmallerHall hall=new SmallerHall(Window);
+        //SeatBooking seatBooking=new SeatBooking(Window);
+        SmallerHall hall=new SmallerHall(Window);
 
     }
 
@@ -38,17 +39,33 @@ public class App {
     // Checkd if a show with the same date and time already exists
     if (!doesShowExist("2023-12-15", "19:00:00")) {
         // Inserts into Rooms table
-        String insertRoom = "INSERT INTO Rooms (room_name, capacity, description) VALUES ('Main Hall', 300, 'Main performance hall')";
+       // String insertRoom = "INSERT INTO Rooms (room_name, capacity, description) VALUES ('Main Hall', 300, 'Main performance hall')";
+       // executeUpdate(insertRoom);
+
+        String insertRoom = "INSERT INTO Rooms (room_name, capacity, description) VALUES ('Small Hall', 150, 'Smaller performance hall')";
         executeUpdate(insertRoom);
 
         // Inserts into Shows table
-        String insertShow = "INSERT INTO Shows (title, date, time, venue) VALUES ('Sample Show', '2023-12-15', '19:00:00', 'Main Hall')";
+       // String insertShow = "INSERT INTO Shows (title, date, time, venue) VALUES ('Sample Show', '2023-12-15', '19:00:00', 'Main Hall')";
+        //executeUpdate(insertShow);
+
+        // Inserts into Shows table
+        String insertShow = "INSERT INTO Shows (title, date, time, venue) VALUES ('Sample Show', '2023-12-15', '19:00:00', 'Small Hall')";
         executeUpdate(insertShow);
+
+
+        // Inserts into BookingRoom table
+        //String insertBookingRoom = "INSERT INTO BookingRoom (show_id, room_id, booking_date, total_price) " +
+          //                             "VALUES ((SELECT show_id FROM Shows WHERE title = 'Sample Show'), " +
+            //                                   "(SELECT room_id FROM Rooms WHERE room_name = 'Main Hall' LIMIT 1), " +
+              //                                 "'2023-11-01', 0.00)";
+        //executeUpdate(insertBookingRoom);
+
 
         // Inserts into BookingRoom table
         String insertBookingRoom = "INSERT INTO BookingRoom (show_id, room_id, booking_date, total_price) " +
                                        "VALUES ((SELECT show_id FROM Shows WHERE title = 'Sample Show'), " +
-                                               "(SELECT room_id FROM Rooms WHERE room_name = 'Main Hall' LIMIT 1), " +
+                                               "(SELECT room_id FROM Rooms WHERE room_name = 'Small Hall' LIMIT 1), " +
                                                "'2023-11-01', 0.00)";
         executeUpdate(insertBookingRoom);
     } else {
