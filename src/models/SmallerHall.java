@@ -28,12 +28,14 @@ public class SmallerHall {
     private static final int BUTTONS_PER_ROW = 20;
     private int showId;
     private int roomId;
+    private int BookingId;
 
 
     public SmallerHall(JFrame window) {
         seats = new HashMap<>();
         this.showId = getLatestShowId();
         this.roomId=getLatestRoomID();
+        this.BookingId=getLatestBookingId();
         initialiseGui(window);
         loadSeat(); 
         updateButton(); 
@@ -44,7 +46,7 @@ public class SmallerHall {
              PreparedStatement pstmt = conn.prepareStatement(
             "SELECT seat_number, status FROM SeatStates WHERE show_id = ? AND room_id = ?")) {
             pstmt.setInt(1, showId);
-            pstmt.setInt(2, roomId); // Assuming 2 is the room_id for SmallerHall
+            pstmt.setInt(2, roomId); 
             ResultSet rs = pstmt.executeQuery();
             
             while (rs.next()) {
@@ -385,7 +387,23 @@ public class SmallerHall {
         } catch (SQLException e) {
             e.printStackTrace();
         }
-        return 2; // Default room ID for Smaller Hall
+        return -1; 
+    }
+
+    private int getLatestBookingId() {
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(
+                "SELECT booking_id FROM BookingRoom WHERE show_id = ? AND room_id = ? ORDER BY booking_id LIMIT 1")) {
+                    pstmt.setInt(1, showId);
+                    pstmt.setInt(2, roomId);
+                    ResultSet rs = pstmt.executeQuery();
+            if (rs.next()) {
+                return rs.getInt("booking_id");
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return -1;
     }
     private void saveSeatBooking(String seatId, SeatStatus status) {
         try (Connection conn = DatabaseConnection.getConnection();
@@ -396,6 +414,16 @@ public class SmallerHall {
             pstmt.setString(3, status.name());
             pstmt.setInt(4, roomId);
             pstmt.executeUpdate();
+
+        if (status == SeatStatus.BOOKED || status == SeatStatus.RESERVED || status == SeatStatus.WHEELCHAIR) {
+            try (PreparedStatement pstmt1 = conn.prepareStatement(
+                "INSERT INTO Tickets (booking_id,seat_number, price) VALUES (?, ?, ?)")) {
+                pstmt1.setInt(1, BookingId);
+                pstmt1.setString(2, seatId);
+                pstmt1.setDouble(3, 6.50); 
+                pstmt1.executeUpdate();
+            }
+        }
             System.out.println("Saved booking for seat: " + seatId + " with status: " + status);
         } catch (SQLException e) {
             System.err.println("Error saving seat booking: " + e.getMessage());
@@ -411,6 +439,15 @@ public class SmallerHall {
             pstmt.setString(2, seatId);
             pstmt.setInt(3, roomId);
             pstmt.executeUpdate();
+
+            try (PreparedStatement pstmt1 = conn.prepareStatement(
+            "DELETE FROM SeatStates WHERE show_id = ? AND seat_number = ? AND room_id = ? AND boking_id = ?")) {
+            pstmt1.setInt(1, showId);
+            pstmt1.setString(2, seatId);
+            pstmt1.setInt(3, roomId);
+            pstmt1.setInt(4, BookingId);
+            pstmt1.executeUpdate();
+        }
             System.out.println("Deleted booking for seat: " + seatId);
         } catch (SQLException e) {
             System.err.println("Error deleting seat booking: " + e.getMessage());
