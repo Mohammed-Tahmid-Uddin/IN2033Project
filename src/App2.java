@@ -37,6 +37,25 @@ public class App2 {
     private static void insertData() {
     // Checkd if a show with the same date and time already exists
     if (!doesShowExist("2023-12-15", "19:00:00")) {
+        String insertGreenRoom = "INSERT INTO Rooms (room_name, capacity, description) VALUES ('The Green Room', 12, 'Small meeting room, Classroom: 12, Boardroom: 10, Presentation: 20')";
+        executeUpdate(insertGreenRoom);
+
+        String insertBronteBoardroom = "INSERT INTO Rooms (room_name, capacity, description) VALUES ('Brontë Boardroom', 25, 'Medium meeting room, Classroom: 25, Boardroom: 18, Presentation: 40')";
+        executeUpdate(insertBronteBoardroom);
+
+        String insertDickensDen = "INSERT INTO Rooms (room_name, capacity, description) VALUES ('Dickens Den', 15, 'Compact meeting room, Classroom: 15, Boardroom: 12, Presentation: 25')";
+        executeUpdate(insertDickensDen);
+
+        String insertPoeParlor = "INSERT INTO Rooms (room_name, capacity, description) VALUES ('Poe Parlor', 20, 'Versatile meeting room, Classroom: 20, Boardroom: 14, Presentation: 30')";
+        executeUpdate(insertPoeParlor);
+
+        String insertGlobeRoom = "INSERT INTO Rooms (room_name, capacity, description) VALUES ('Globe Room', 30, 'Large meeting room, Classroom: 30, Boardroom: 20, Presentation: 50')";
+        executeUpdate(insertGlobeRoom);
+
+        String insertChekhovChamber = "INSERT INTO Rooms (room_name, capacity, description) VALUES ('Chekhov Chamber', 18, 'Medium meeting room, Classroom: 18, Boardroom: 16, Presentation: 35')";
+        executeUpdate(insertChekhovChamber);
+
+
         // Inserts into Rooms table
         String insertRoom = "INSERT INTO Rooms (room_name, capacity, description) VALUES ('Main Hall', 300, 'Main performance hall')";
         executeUpdate(insertRoom);
