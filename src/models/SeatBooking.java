@@ -156,34 +156,62 @@ public class SeatBooking {
 
         // Add the seat panels to the main panel
 
-        // Add a refund button
-        JButton refundButton = new JButton("Refund Seat");
-        refundButton.setFont(new Font("Georgia", Font.PLAIN, 11));
-        refundButton.setBackground(new Color(181, 222, 184));
-        refundButton.setForeground(new Color(46, 83, 63));
-        refundButton.setFocusPainted(false);
-        refundButton.setPreferredSize(new Dimension(120, 50));
-        refundButton.setBorder(BorderFactory.createEmptyBorder(2, 12, 2, 12));
-        refundButton.setOpaque(false);
-        refundButton.setContentAreaFilled(false);
-        refundButton.setUI(new javax.swing.plaf.basic.BasicButtonUI());
-        refundButton.setBorder(new GlowingRoundedBorder(20, new Color(97, 143, 110)));
-        refundButton.addMouseListener(new java.awt.event.MouseAdapter() {
+
+
+        // Add a refund seat button
+        JButton refundSeatButton = new JButton("Refund Seat");
+        refundSeatButton.setFont(new Font("Georgia", Font.PLAIN, 11));
+        refundSeatButton.setBackground(new Color(181, 222, 184));
+        refundSeatButton.setForeground(new Color(46, 83, 63));
+        refundSeatButton.setFocusPainted(false);
+        refundSeatButton.setPreferredSize(new Dimension(120, 50));
+        refundSeatButton.setBorder(BorderFactory.createEmptyBorder(2, 12, 2, 12));
+        refundSeatButton.setOpaque(false);
+        refundSeatButton.setContentAreaFilled(false);
+        refundSeatButton.setUI(new javax.swing.plaf.basic.BasicButtonUI());
+        refundSeatButton.setBorder(new GlowingRoundedBorder(20, new Color(97, 143, 110)));
+        refundSeatButton.addMouseListener(new java.awt.event.MouseAdapter() {
             @Override
             public void mouseEntered(java.awt.event.MouseEvent evt) {
-                refundButton.setOpaque(true);
-                refundButton.setBackground(new Color(197, 234, 198));
+                refundSeatButton.setOpaque(true);
+                refundSeatButton.setBackground(new Color(197, 234, 198));
             }
 
             @Override
             public void mouseExited(java.awt.event.MouseEvent evt) {
-                refundButton.setOpaque(false);
+                refundSeatButton.setOpaque(false);
             }
         });
+        refundSeatButton.addActionListener(e -> showRefundSeatOption());
+        menuPanel.add(refundSeatButton);
 
+        // Add a refund room button
+        JButton refundRoomButton = new JButton("Refund Room");
+        refundRoomButton.setFont(new Font("Georgia", Font.PLAIN, 11));
+        refundRoomButton.setBackground(new Color(181, 222, 184));
+        refundRoomButton.setForeground(new Color(46, 83, 63));
+        refundRoomButton.setFocusPainted(false);
+        refundRoomButton.setPreferredSize(new Dimension(120, 50));
+        refundRoomButton.setBorder(BorderFactory.createEmptyBorder(2, 12, 2, 12));
+        refundRoomButton.setOpaque(false);
+        refundRoomButton.setContentAreaFilled(false);
+        refundRoomButton.setUI(new javax.swing.plaf.basic.BasicButtonUI());
+        refundRoomButton.setBorder(new GlowingRoundedBorder(20, new Color(97, 143, 110)));
+        refundRoomButton.addMouseListener(new java.awt.event.MouseAdapter() {
+            @Override
+            public void mouseEntered(java.awt.event.MouseEvent evt) {
+                refundRoomButton.setOpaque(true);
+                refundRoomButton.setBackground(new Color(197, 234, 198));
+            }
 
-        refundButton.addActionListener(e -> showRefundOption());
-        menuPanel.add(refundButton);
+            @Override
+            public void mouseExited(java.awt.event.MouseEvent evt) {
+                refundRoomButton.setOpaque(false);
+            }
+        });
+        refundRoomButton.addActionListener(e -> showRefundRoomOption());
+
+        menuPanel.add(refundRoomButton);
 
 
         // Creates the screen panel
@@ -466,6 +494,139 @@ public class SeatBooking {
         seatButton.setOpaque(true);
         seatButton.setBorder(BorderFactory.createLineBorder(Color.BLACK));
         JOptionPane.showMessageDialog(window, seatId + " is now available again.");
+    }
+    // Authorization method
+    private boolean authorizeRefund() {
+        JTextField usernameField = new JTextField(15);
+        JPasswordField passwordField = new JPasswordField(15);
+
+        JPanel panel = new JPanel(new GridLayout(2, 2));
+        panel.add(new JLabel("Username:"));
+        panel.add(usernameField);
+        panel.add(new JLabel("Password:"));
+        panel.add(passwordField);
+
+        int result = JOptionPane.showConfirmDialog(null, panel, "Manager Authorization Required", JOptionPane.OK_CANCEL_OPTION);
+        if (result != JOptionPane.OK_OPTION) {
+            return false;
+        }
+
+        String username = usernameField.getText();
+        String password = new String(passwordField.getPassword());
+
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(
+                     "SELECT role FROM Staff WHERE username = ? AND password = ?")) {
+            pstmt.setString(1, username);
+            pstmt.setString(2, password);
+            ResultSet rs = pstmt.executeQuery();
+
+            if (rs.next()) {
+                String role = rs.getString("role");
+                if (role.equals("Deputy Manager") || role.equals("Manager")) {
+                    return true;
+                } else {
+                    JOptionPane.showMessageDialog(window, "Only Deputy Managers or Managers can authorize refunds.");
+                    return false;
+                }
+            } else {
+                JOptionPane.showMessageDialog(window, "Invalid username or password.");
+                return false;
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(window, "Error verifying authorization: " + e.getMessage());
+            return false;
+        }
+    }
+
+    private void showRefundSeatOption() {
+        // Require authorization
+        if (!authorizeRefund()) {
+            return;
+        }
+
+        String seatId = JOptionPane.showInputDialog(window, "Enter the seat ID to refund (e.g., S 1 or B 1):");
+        if (seatId != null && !seatId.trim().isEmpty()) {
+            seatId = seatId.trim();
+            if (seatId.startsWith("S ") || seatId.startsWith("B ")) {
+                JButton seatButton = findSeatButton(seatId);
+                if (seatButton != null) {
+                    refundSeat(seatId, seatButton);
+                } else {
+                    JOptionPane.showMessageDialog(window, "Seat ID not found.");
+                }
+            } else {
+                JOptionPane.showMessageDialog(window, "Invalid seat ID format. Please use 'S ' or 'B ' followed by a space and the seat number.");
+            }
+        }
+    }
+
+    private void showRefundRoomOption() {
+        // Require authorization
+        if (!authorizeRefund()) {
+            return;
+        }
+
+        // List of other rooms (excluding Main Hall)
+        String[] roomOptions = {
+                "Rehearsal Space",
+                "The Green Room",
+                "Brontë Boardroom",
+                "Dickens Den",
+                "Poe Parlor",
+                "Globe Room",
+                "Chekhov Chamber"
+        };
+        String selectedRoom = (String) JOptionPane.showInputDialog(
+                window,
+                "Select a room to refund:",
+                "Refund Room",
+                JOptionPane.PLAIN_MESSAGE,
+                null,
+                roomOptions,
+                roomOptions[0]
+        );
+
+        if (selectedRoom == null) {
+            return; // User canceled
+        }
+
+        // Check if the room has a booking on the specified date
+        String bookingDate = "2025-04-05"; // Hardcoded for now; can be made dynamic later
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(
+                     "SELECT booking_id FROM BookingRoom WHERE room_id = (SELECT room_id FROM Rooms WHERE room_name = ? LIMIT 1) AND booking_date = ?")) {
+            pstmt.setString(1, selectedRoom);
+            pstmt.setString(2, bookingDate);
+            ResultSet rs = pstmt.executeQuery();
+
+            if (rs.next()) {
+                int bookingId = rs.getInt("booking_id");
+
+                // Confirm the refund
+                int confirm = JOptionPane.showConfirmDialog(window,
+                        "Are you sure you want to refund the booking for " + selectedRoom + " on " + bookingDate + "?",
+                        "Confirm Room Refund",
+                        JOptionPane.YES_NO_OPTION);
+                if (confirm != JOptionPane.YES_OPTION) {
+                    return;
+                }
+
+                // Delete the booking from BookingRoom
+                try (PreparedStatement deleteStmt = conn.prepareStatement(
+                        "DELETE FROM BookingRoom WHERE booking_id = ?")) {
+                    deleteStmt.setInt(1, bookingId);
+                    deleteStmt.executeUpdate();
+                    JOptionPane.showMessageDialog(window, "Booking for " + selectedRoom + " on " + bookingDate + " has been refunded.");
+                }
+            } else {
+                JOptionPane.showMessageDialog(window, "No booking found for " + selectedRoom + " on " + bookingDate + ".");
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(window, "Error refunding room: " + e.getMessage());
+        }
     }
 
     private void showRefundOption() {
