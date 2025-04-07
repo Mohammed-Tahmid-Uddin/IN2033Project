@@ -2,6 +2,8 @@ package Componenets;
 
 import utils.DatabaseConnection;
 
+import models.SmallerHall;
+
 import javax.swing.*;
 import java.awt.*;
 import java.sql.Connection;
@@ -16,10 +18,13 @@ public class Sidebar {
     private boolean sidebarVisible = false;
     private Map<String, Map<String, Double>> roomPricing;
 
-    public Sidebar() {
+    private JFrame window;
+
+    public Sidebar(JFrame window) {
         
         initialiseSidebar();
         initializePricing();
+        this.window = window;
 
     }
 
@@ -93,6 +98,7 @@ public class Sidebar {
         addSidebarButton("Home");
         addSidebarButton("Create Report");
         addSidebarButton("Book Other Rooms");
+        addSidebarButton("Smaller hall");
        
 
         // Initially hide the sidebar
@@ -108,9 +114,14 @@ public class Sidebar {
         button.setFocusPainted(false);
         sidebar.add(button);
         sidebar.add(Box.createRigidArea(new Dimension(0, 10)));
-        if (text.equals("Book Other Rooms")){
+        if (text.equals("Home")) {
+            button.addActionListener(e -> showHomeContent());
+        } else if (text.equals("Book Other Rooms")) {
             button.addActionListener(e -> showRoomBookingDialog());
         }
+
+
+
     }
 
     public JPanel getSidebar() {
@@ -213,4 +224,28 @@ public class Sidebar {
         }
         return false;
     }
+
+    public void showHomeContent() {
+        JPanel homePanel = new JPanel();
+        homePanel.setLayout(new BorderLayout());
+
+        JLabel label = new JLabel("Welcome to the Home Page", SwingConstants.CENTER);
+        label.setFont(new Font("Arial", Font.PLAIN, 24));
+        homePanel.add(label, BorderLayout.CENTER);
+
+        // Replace current content
+        Container content = window.getContentPane();
+        content.removeAll();
+
+        content.setLayout(new BorderLayout());
+        content.add(getSidebar(), BorderLayout.WEST);  // Add the sidebar again
+        content.add(homePanel, BorderLayout.CENTER);   // Add home content
+
+        content.revalidate();
+        content.repaint();
+    }
+
+
+
+
 }

@@ -90,7 +90,7 @@ public class SeatBooking {
 
 
         // Creates the menu button
-        sidebar=new Sidebar();
+        sidebar=new Sidebar(window);
         mainPanel.add(sidebar.getSidebar(), BorderLayout.WEST);
         JButton menuButton = createMenuButton();
 

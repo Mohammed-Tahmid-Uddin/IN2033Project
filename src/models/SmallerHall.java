@@ -30,6 +30,8 @@ public class SmallerHall {
     private int roomId;
     private int BookingId;
 
+    private JPanel panel;
+
 
     public SmallerHall(JFrame window) {
         seats = new HashMap<>();
@@ -37,8 +39,8 @@ public class SmallerHall {
         this.roomId=getLatestRoomID();
         this.BookingId=getLatestBookingId();
         initialiseGui(window);
-        loadSeat(); 
-        updateButton(); 
+        loadSeat();
+        updateButton();
     }
 
  private void loadSeat() {
@@ -85,7 +87,7 @@ public class SmallerHall {
         JPanel mainPanel = new JPanel(new BorderLayout());
 
         // Creates the menu button
-        sidebar=new Sidebar();
+        sidebar=new Sidebar(window);
         mainPanel.add(sidebar.getSidebar(), BorderLayout.WEST);
         JButton menuButton = createMenuButton();
 
@@ -121,14 +123,14 @@ public class SmallerHall {
         // Screen button centered
         topPanel.add(screenPanel, BorderLayout.CENTER);
 
-        
+
 
 
 
         // Adds the main panel to the window
         mainPanel.add(topPanel, BorderLayout.NORTH);
         window.add(mainPanel);
-        window.revalidate(); 
+        window.revalidate();
     }
 
     private JButton createMenuButton() {
@@ -454,5 +456,7 @@ public class SmallerHall {
             e.printStackTrace();
         }
     }
-    
+
 }
+    
+
