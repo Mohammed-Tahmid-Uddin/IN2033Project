@@ -13,12 +13,12 @@ import java.util.Map;
 
 
 public class SeatBooking {
-    private Map<String, SeatStatus> seats; 
+    protected Map<String, SeatStatus> seats;
     private JButton[][] stallButtons;
     private JButton[][] balconyButtons;
     private int roomId;
-  
-    private enum SeatStatus {AVAILABLE, BOOKED, RESERVED, WHEELCHAIR}
+
+    protected enum SeatStatus {AVAILABLE, BOOKED, RESERVED, WHEELCHAIR}
 
     private Sidebar sidebar; 
     private JFrame window;
@@ -41,9 +41,9 @@ public class SeatBooking {
         updateButton(); 
     }
 
-    
 
-    private void loadSeat() {
+    //private --> protected
+    protected void loadSeat() {
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(
                 "SELECT seat_number, status FROM SeatStates WHERE show_id = ? AND room_id = ?")) {
@@ -63,7 +63,8 @@ public class SeatBooking {
         }
     }
 
-    private void updateButton() {
+    //private --> protected
+    protected void updateButton() {
         seats.forEach((seatId, status) -> {
             JButton button = findSeatButton(seatId);
             if (button != null) {
@@ -81,7 +82,8 @@ public class SeatBooking {
         });
     }
 
-    private void initialiseGui(JFrame window) {
+    //private --> protected
+    protected void initialiseGui(JFrame window) {
         // Creates a main panel with BorderLayout
         JPanel mainPanel = new JPanel(new BorderLayout());
 
@@ -290,13 +292,18 @@ public class SeatBooking {
 
 
     // Method to check if an adjacent seat is valid for removal
-    private boolean isValidAdjacentSeat(int row, int col, boolean isLeft, JButton[][] buttons) {
+    //made public for testing — revert back to priv once testing is complete
+
+    public boolean isValidAdjacentSeat(int row, int col, boolean isLeft, JButton[][] buttons) {
         int targetCol = isLeft ? col - 1 : col + 1; // checks if we want to go left or right
 
-        // Check if the target column is within bounds
-        if (targetCol < 0 || targetCol >= BUTTONS_PER_ROW) {
-            return false; // Out of bounds
+        // Safely check bounds for both row and target column before accessing the seat.
+        // Prevents ArrayIndexOutOfBoundsException during wheelchair seat logic or testing.
+        if (row < 0 || row >= buttons.length ||
+                targetCol < 0 || targetCol >= buttons[row].length) {
+            return false;
         }
+
 
         // Check if the adjacent seat is available
         JButton adjacentButton = buttons[row][targetCol];
@@ -304,7 +311,7 @@ public class SeatBooking {
     }
 
     // Method to revert seat status
-    private void revertSeatStatus(String seatId, JButton seatButton) {
+    public void revertSeatStatus(String seatId, JButton seatButton) {
         seats.put(seatId, SeatStatus.AVAILABLE);
         seatButton.setEnabled(true);
         seatButton.setText(seatId); // Restores the text
@@ -390,7 +397,7 @@ public class SeatBooking {
         }
     }  
     
-    private void resetAdjacentSeat(JButton button, String prefix, int row, int col) {
+    protected void resetAdjacentSeat(JButton button, String prefix, int row, int col) {
         String adjacentSeatId = prefix + ((row * BUTTONS_PER_ROW + col) + 1);
         button.setEnabled(true);
         button.setText(adjacentSeatId);
@@ -399,8 +406,9 @@ public class SeatBooking {
         button.setBorder(BorderFactory.createLineBorder(Color.BLACK));
         seats.put(adjacentSeatId, SeatStatus.AVAILABLE);
     }
-    
-    private int getLatestShowId() {
+
+    // public --> protected
+    protected int getLatestShowId() {
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement pstmt = conn.prepareStatement("SELECT show_id FROM Shows ORDER BY show_id DESC LIMIT 1")) {
             ResultSet rs = pstmt.executeQuery();
@@ -413,7 +421,8 @@ public class SeatBooking {
         return -1;
     }
 
-    private int getLatestRoomID() {
+    //public --> protected
+    protected int getLatestRoomID() {
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement pstmt = conn.prepareStatement("SELECT room_id FROM Rooms WHERE room_name = 'Main Hall' LIMIT 1")) {
             ResultSet rs = pstmt.executeQuery();
@@ -426,8 +435,8 @@ public class SeatBooking {
         return -1; 
     }
 
-
-    private int getLatestBookingId() {
+    //public --> protected
+    protected int getLatestBookingId() {
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(
                 "SELECT booking_id FROM BookingRoom WHERE show_id = ? AND room_id = ? ORDER BY booking_id LIMIT 1")) {

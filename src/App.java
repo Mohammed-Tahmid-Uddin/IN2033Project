@@ -18,9 +18,9 @@ public class App {
         insertData();
         Window.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
-
+        Window.setResizable(true);
         Window.setVisible(true);
-        Window.setExtendedState(JFrame.MAXIMIZED_BOTH);  
+        Window.setExtendedState(JFrame.MAXIMIZED_BOTH);
         Window.setTitle("Lancaster's Music Hall App");
         Window.getContentPane().setBackground(Color.WHITE);
         if (!doesShowExist("2023-12-15", "19:00:00")) {
